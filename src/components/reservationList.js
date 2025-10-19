@@ -1,54 +1,48 @@
-﻿import { listReservations, removeReservation } from "../services/reservationService.js";
-import { SPACES } from "../services/spacesData.js";
+﻿import { listReservations, removeReservation } from '../services/reservationService.js';
+import { SPACES } from '../services/spacesData.js';
 
 export function renderReservationList(root) {
-  root.innerHTML = "<h2>Mis reservas</h2>";
+  root.innerHTML = '<h2>Mis reservas</h2>';
   const list = listReservations();
-  if (!list.length) {
-    const p = document.createElement("p");
-    p.textContent = "No hay reservas.";
-    root.appendChild(p);
-    return;
-  }
-
-  const container = document.createElement("div");
-  container.style.display = "flex";
-  container.style.flexDirection = "column";
-  container.style.gap = "0.5rem";
+  if (!list.length) { root.innerHTML += '<p>No hay reservas.</p>'; return; }
+  const container = document.createElement('div');
+  container.style.display = 'flex';
+  container.style.flexDirection = 'column';
+  container.style.gap = '0.4rem';
 
   list.forEach(r => {
-    const space = SPACES.find(s => s.id === r.spaceId) || { name: "Desconocido", img: "" };
-    const row = document.createElement("div");
-    row.style.display = "flex";
-    row.style.alignItems = "center";
-    row.style.gap = "0.6rem";
-    row.style.marginBottom = "0.6rem";
+    const space = SPACES.find(s => s.id === r.spaceId) || { name: 'Desconocido', img: '' };
+    const div = document.createElement('div');
+    div.style.display = 'flex';
+    div.style.alignItems = 'center';
+    div.style.gap = '0.6rem';
+    div.style.marginBottom = '0.6rem';
 
     if (space.img) {
-      const img = document.createElement("img");
+      const img = document.createElement('img');
       img.src = space.img;
       img.alt = space.name;
-      img.style.width = "80px";
-      img.style.height = "60px";
-      img.style.objectFit = "cover";
-      img.style.borderRadius = "4px";
-      row.appendChild(img);
+      img.style.width = '80px';
+      img.style.height = '60px';
+      img.style.objectFit = 'cover';
+      img.style.borderRadius = '4px';
+      div.appendChild(img);
     }
 
-    const info = document.createElement("div");
-    info.style.flex = "1";
-    info.innerHTML = `<strong>${r.name}</strong><br/><small>${space.name} — ${r.date} ${r.time}</small>`;
-    row.appendChild(info);
+    const info = document.createElement('div');
+    info.style.flex = '1';
+    info.innerHTML = `<strong>${r.name}</strong> — ${space.name} <br/><small>${r.date} ${r.timeStart} - ${r.timeEnd} (${r.duration}h)</small>`;
+    div.appendChild(info);
 
-    const btn = document.createElement("button");
-    btn.textContent = "Cancelar";
-    btn.addEventListener("click", () => {
+    const btn = document.createElement('button');
+    btn.textContent = 'Cancelar';
+    btn.addEventListener('click', () => {
       removeReservation(r.id);
       renderReservationList(root);
     });
-    row.appendChild(btn);
+    div.appendChild(btn);
 
-    container.appendChild(row);
+    container.appendChild(div);
   });
 
   root.appendChild(container);

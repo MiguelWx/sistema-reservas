@@ -106,9 +106,9 @@ export function renderReservationForm(root, spaces, onSave) {
     return hh*60 + mm;
   };
 
-  // notificación visual (toast) y sonido (beep)
-  function showNotification(message) {
-    // toast
+  // Show notification (visual) and play sound:
+  async function notifyWithSound(message) {
+    // Toast (visual)
     let toast = document.getElementById("toast-notify");
     if (!toast) {
       toast = document.createElement("div");
@@ -131,25 +131,33 @@ export function renderReservationForm(root, spaces, onSave) {
       toast.style.opacity = "0";
     }, 1600);
 
-    // beep corto usando Web Audio API
+    // Intentar reproducir archivo /src/assets/beep.mp3
     try {
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      const o = ctx.createOscillator();
-      const g = ctx.createGain();
-      o.type = "sine";
-      o.frequency.value = 880; // A6
-      o.connect(g);
-      g.connect(ctx.destination);
-      g.gain.value = 0.02;
-      o.start();
-      setTimeout(() => { o.stop(); ctx.close(); }, 140);
-    } catch (e) {
-      // si falla audio, no bloquea
-      console.warn("Audio failed:", e);
+      const audio = new Audio("/src/assets/beep.mp3");
+      // .play() devuelve una promesa; la esperamos por si hay bloqueo
+      await audio.play();
+      return;
+    } catch (err) {
+      // si falla (archivo no existe o autoplay bloqueado) -> fallback WebAudio
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.type = "sine";
+        o.frequency.value = 880;
+        o.connect(g);
+        g.connect(ctx.destination);
+        g.gain.value = 0.02;
+        o.start();
+        setTimeout(() => { o.stop(); ctx.close(); }, 140);
+      } catch (e) {
+        // no bloquear si audio no es posible
+        console.warn("No se pudo reproducir sonido:", e);
+      }
     }
   }
 
-  form.addEventListener("submit", (e) => {
+  form.addEventListener("submit", async (e) => {
     e.preventDefault();
     const name = inputName.value.trim();
     const date = inputDate.value;
@@ -187,7 +195,7 @@ export function renderReservationForm(root, spaces, onSave) {
 
     try {
       addReservation(reservation);
-      showNotification("Reserva confirmada");
+      await notifyWithSound("Reserva confirmada");
       form.reset();
       updatePreview();
       if (onSave) onSave();
